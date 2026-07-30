@@ -32,7 +32,7 @@ export default function Home() {
   }
 
   return (
-    <main className="max-w-xl mx-auto mt-20 px-4">
+    <main className="max-w-3xl mx-auto mt-20 px-4">
       <h1 className="text-2xl font-bold mb-4">Create a new topic</h1>
       <form onSubmit={createBoard} className="flex flex-col gap-4">
         <textarea

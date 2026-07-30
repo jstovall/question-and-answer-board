@@ -161,7 +161,7 @@ async function loadComments() {
   if (!board) return <div className="p-8">Board not found.</div>
 
   return (
-    <main className="max-w-xl mx-auto mt-16 px-4">
+    <main className="max-w-3xl mx-auto mt-16 px-4">
       <h1 className="text-2xl font-bold mb-6">{board.question}</h1>
 
       <form onSubmit={submitAnswer} className="flex flex-col gap-3 mb-8">
@@ -185,57 +185,55 @@ async function loadComments() {
           <p className="text-gray-500">No answers yet. Be the first!</p>
         )}
         {answers.map((answer) => (
-          <div key={answer.id} className="border rounded p-3">
-            <div className="flex gap-3 items-start">
-              <div className="flex flex-col items-center">
+          <div key={answer.id} className="border rounded p-2 bg-white">
+            <div className="flex gap-2 items-center">
+              <div className="flex items-center gap-1 text-gray-400">
                 <button
                   onClick={() => vote(answer.id, 1)}
-                  className={`px-2 rounded ${myVotes[answer.id] === 1 ? 'bg-green-500 text-white' : 'bg-gray-100'}`}
+                  className={`hover:text-green-600 ${myVotes[answer.id] === 1 ? 'text-green-600' : ''}`}
                 >
                   ▲
                 </button>
-                <span className="text-sm font-semibold my-1">{answer.score}</span>
+                <span className="text-xs font-medium text-gray-600 w-4 text-center">
+                  {answer.score}
+                </span>
                 <button
                   onClick={() => vote(answer.id, -1)}
-                  className={`px-2 rounded ${myVotes[answer.id] === -1 ? 'bg-red-500 text-white' : 'bg-gray-100'}`}
+                  className={`hover:text-red-600 ${myVotes[answer.id] === -1 ? 'text-red-600' : ''}`}
                 >
                   ▼
                 </button>
               </div>
-              <div className="pt-1 flex-1">
-                {answer.body}
-                <div>
-                  <button
-                    onClick={() =>
-                      setOpenCommentBox(openCommentBox === answer.id ? null : answer.id)
-                    }
-                    className="text-sm text-blue-600 mt-2"
-                  >
-                    {comments[answer.id]?.length
-                      ? `${comments[answer.id].length} comment(s)`
-                      : 'Add comment'}
-                  </button>
-                </div>
-              </div>
+              <div className="flex-1 text-sm">{answer.body}</div>
+              <button
+                onClick={() =>
+                  setOpenCommentBox(openCommentBox === answer.id ? null : answer.id)
+                }
+                className="text-xs text-blue-600 whitespace-nowrap"
+              >
+                {comments[answer.id]?.length
+                  ? `${comments[answer.id].length} comment(s)`
+                  : 'Comment'}
+              </button>
             </div>
 
             {openCommentBox === answer.id && (
-              <div className="mt-3 ml-8 flex flex-col gap-2">
+              <div className="mt-2 ml-6 flex flex-col gap-1.5">
                 {(comments[answer.id] || []).map((c) => (
-                  <div key={c.id} className="text-sm bg-gray-50 rounded p-2">
+                  <div key={c.id} className="text-xs bg-gray-50 rounded p-1.5">
                     {c.body}
                   </div>
                 ))}
                 <div className="flex gap-2">
                   <input
-                    className="border rounded p-2 flex-1 text-sm"
+                    className="border rounded p-1.5 flex-1 text-xs"
                     placeholder="Write a comment..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                   />
                   <button
                     onClick={() => submitComment(answer.id)}
-                    className="bg-gray-800 text-white rounded px-3 text-sm"
+                    className="bg-gray-800 text-white rounded px-2 text-xs"
                   >
                     Post
                   </button>
