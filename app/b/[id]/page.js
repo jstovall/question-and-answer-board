@@ -69,7 +69,8 @@ export default function BoardPage({ params }) {
     })
     setMyVotes(voteMap)
   }
-async function loadComments() {
+
+  async function loadComments() {
     const { data, error } = await supabase
       .from('comments')
       .select()
@@ -86,22 +87,6 @@ async function loadComments() {
       grouped[c.answer_id].push(c)
     })
     setComments(grouped)
-  }
-
-  async function submitComment(answerId) {
-    if (!newComment.trim()) return
-
-    const { error } = await supabase
-      .from('comments')
-      .insert({ answer_id: answerId, body: newComment.trim() })
-
-    if (error) {
-      alert('Something went wrong: ' + error.message)
-      return
-    }
-
-    setNewComment('')
-    loadComments()
   }
 
   async function submitAnswer(e) {
@@ -121,11 +106,26 @@ async function loadComments() {
     loadAnswers()
   }
 
+  async function submitComment(answerId) {
+    if (!newComment.trim()) return
+
+    const { error } = await supabase
+      .from('comments')
+      .insert({ answer_id: answerId, body: newComment.trim() })
+
+    if (error) {
+      alert('Something went wrong: ' + error.message)
+      return
+    }
+
+    setNewComment('')
+    loadComments()
+  }
+
   async function vote(answerId, value) {
     const voterId = getVoterId()
     const currentVote = myVotes[answerId]
 
-    // Clicking the same button again removes the vote
     const newValue = currentVote === value ? null : value
 
     if (newValue === null) {
@@ -140,7 +140,6 @@ async function loadComments() {
         .upsert({ voter_id: voterId, answer_id: answerId, value: newValue })
     }
 
-    // Recalculate score from scratch to keep things simple and accurate
     const { data: votesForAnswer } = await supabase
       .from('votes')
       .select('value')
@@ -162,11 +161,11 @@ async function loadComments() {
 
   return (
     <main className="max-w-3xl mx-auto mt-16 px-4">
-      <h1 className="text-2xl font-bold mb-6">{board.question}</h1>
+      <h1 className="text-xl font-semibold mb-6">{board.question}</h1>
 
       <form onSubmit={submitAnswer} className="flex flex-col gap-3 mb-8">
         <textarea
-          className="border rounded p-3 w-full"
+          className="rounded p-3 w-full bg-white"
           rows={2}
           placeholder="Add your answer..."
           value={newAnswer}
@@ -174,18 +173,18 @@ async function loadComments() {
         />
         <button
           type="submit"
-          className="bg-black text-white rounded py-2 px-4 self-start"
+          className="bg-gray-800 text-white rounded py-2 px-4 self-start"
         >
           Submit Answer
         </button>
       </form>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {answers.length === 0 && (
           <p className="text-gray-500">No answers yet. Be the first!</p>
         )}
         {answers.map((answer) => (
-          <div key={answer.id} className="border rounded p-2 bg-white">
+          <div key={answer.id} className="rounded p-2 bg-gray-200">
             <div className="flex gap-2 items-center">
               <div className="flex items-center gap-1 text-gray-400">
                 <button
@@ -194,7 +193,7 @@ async function loadComments() {
                 >
                   ▲
                 </button>
-                <span className="text-xs font-medium text-gray-600 w-4 text-center">
+                <span className="text-xs font-normal text-gray-600 w-4 text-center">
                   {answer.score}
                 </span>
                 <button
@@ -220,13 +219,13 @@ async function loadComments() {
             {openCommentBox === answer.id && (
               <div className="mt-2 ml-6 flex flex-col gap-1.5">
                 {(comments[answer.id] || []).map((c) => (
-                  <div key={c.id} className="text-xs bg-gray-50 rounded p-1.5">
+                  <div key={c.id} className="text-xs bg-gray-300 rounded p-1.5">
                     {c.body}
                   </div>
                 ))}
                 <div className="flex gap-2">
                   <input
-                    className="border rounded p-1.5 flex-1 text-xs"
+                    className="rounded p-1.5 flex-1 text-xs bg-white"
                     placeholder="Write a comment..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}

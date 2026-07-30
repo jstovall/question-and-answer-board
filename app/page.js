@@ -33,10 +33,10 @@ export default function Home() {
 
   return (
     <main className="max-w-3xl mx-auto mt-20 px-4">
-      <h1 className="text-2xl font-bold mb-4">Create a new topic</h1>
+      <h1 className="text-xl font-semibold mb-4">Create a new topic</h1>
       <form onSubmit={createBoard} className="flex flex-col gap-4">
         <textarea
-          className="border rounded p-3 w-full"
+          className="rounded p-3 w-full bg-white"
           rows={3}
           placeholder="What's the question?"
           value={question}
@@ -45,7 +45,7 @@ export default function Home() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-black text-white rounded py-2 px-4 disabled:opacity-50"
+          className="bg-gray-800 text-white rounded py-2 px-4 disabled:opacity-50 self-start"
         >
           {loading ? 'Creating...' : 'Create Board'}
         </button>
