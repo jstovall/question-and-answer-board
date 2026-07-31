@@ -13,6 +13,7 @@ export default function Home() {
   const [filterName, setFilterName] = useState('')
   const [answerCounts, setAnswerCounts] = useState({}) // board_id -> count
   const router = useRouter()
+  const [sortBy, setSortBy] = useState('date') // 'date' or 'answers'
 
   useEffect(() => {
     setCreatorName(getSavedName())
@@ -90,15 +91,23 @@ export default function Home() {
     loadBoards()
   }
 
-  const filteredBoards = filterName.trim()
-    ? boards.filter((b) =>
-        (b.creator_name || '').toLowerCase().includes(filterName.trim().toLowerCase())
-      )
-    : boards
+  const filteredBoards = (
+    filterName.trim()
+      ? boards.filter((b) =>
+          (b.creator_name || '').toLowerCase().includes(filterName.trim().toLowerCase())
+        )
+      : boards
+  ).slice().sort((a, b) => {
+    if (sortBy === 'answers') {
+      return (answerCounts[b.id] || 0) - (answerCounts[a.id] || 0)
+    }
+    // default: newest first
+    return new Date(b.created_at) - new Date(a.created_at)
+  })
 
   return (
     <main className="w-full max-w-3xl min-w-[400px] mx-auto mt-16 px-4">
-      <h1 className="text-xl font-semibold mb-4">Create a new topic</h1>
+      <h1 className="text-xl font-semibold mb-4">Post a question</h1>
       <form onSubmit={createBoard} className="flex flex-col gap-3 mb-12">
         <input
           className="rounded p-3 w-full bg-white text-sm"
@@ -118,18 +127,28 @@ export default function Home() {
           disabled={loading}
           className="bg-gray-800 text-white rounded py-2 px-4 disabled:opacity-50 self-start"
         >
-          {loading ? 'Creating...' : 'Create Board'}
+          {loading ? 'Posting...' : 'Ask Question'}
         </button>
       </form>
 
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">All boards</h2>
-        <input
-          className="rounded p-2 bg-white text-sm w-48"
-          placeholder="Filter by your name to delete..."
-          value={filterName}
-          onChange={(e) => setFilterName(e.target.value)}
-        />
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <h2 className="text-lg font-semibold">All Questions</h2>
+        <div className="flex items-center gap-2">
+          <select
+            className="rounded p-2 bg-white text-sm text-gray-500"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="date">Newest</option>
+            <option value="answers">Most answers</option>
+          </select>
+          <input
+            className="rounded p-2 bg-white text-sm w-40"
+            placeholder="Filter by name..."
+            value={filterName}
+            onChange={(e) => setFilterName(e.target.value)}
+          />
+        </div>
       </div>
 
         <div className="flex flex-col gap-2">
