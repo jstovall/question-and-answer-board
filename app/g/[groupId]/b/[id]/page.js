@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState, use } from 'react'
-import { supabase } from '../../../lib/supabaseClient'
-import { getVoterId } from '../../../lib/voterId'
+import { supabase } from '../../../../../lib/supabaseClient'
+import { getVoterId } from '../../../../../lib/voterId'
 
 export default function BoardPage({ params }) {
-  const { id } = use(params)
+  const { groupId, id } = use(params)
   const [board, setBoard] = useState(null)
   const [answers, setAnswers] = useState([])
   const [newAnswer, setNewAnswer] = useState('')
@@ -35,14 +35,6 @@ export default function BoardPage({ params }) {
       return
     }
     setBoard(data)
-  }
-
-  function copyLink() {
-    const url = window.location.href
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
   }
 
   async function loadAnswers() {
@@ -165,12 +157,24 @@ export default function BoardPage({ params }) {
     loadMyVotes()
   }
 
+  function copyLink() {
+    const url = window.location.href
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
   if (loading) return <div className="p-8">Loading...</div>
   if (!board) return <div className="p-8">Board not found.</div>
 
   return (
     <main className="w-full max-w-3xl min-w-[400px] mx-auto mt-16 px-4">
-      <div className="flex items-center justify-between gap-3 mb-6">
+      <a href={`/g/${groupId}`} className="text-xs text-blue-600">
+        ← Back to group
+      </a>
+
+      <div className="flex items-center justify-between gap-3 mb-6 mt-2">
         <h1 className="text-xl font-semibold">{board.question}</h1>
         <button
           onClick={copyLink}
@@ -202,12 +206,12 @@ export default function BoardPage({ params }) {
           <p className="text-gray-500">No answers yet. Be the first!</p>
         )}
         {answers.map((answer) => (
-          <div key={answer.id} className="rounded p-2 bg-gray-200">
+          <div key={answer.id} className="rounded p-2 bg-gray-100">
             <div className="flex gap-2 items-center">
-              <div className="flex items-center gap-1 text-gray-400">
+              <div className="flex items-center gap-1 text-gray-200">
                 <button
                   onClick={() => vote(answer.id, 1)}
-                  className={`hover:text-green-600 ${myVotes[answer.id] === 1 ? 'text-green-600' : ''}`}
+                  className={`hover:text-green-300 ${myVotes[answer.id] === 1 ? 'text-green-300' : ''}`}
                 >
                   ▲
                 </button>
@@ -216,7 +220,7 @@ export default function BoardPage({ params }) {
                 </span>
                 <button
                   onClick={() => vote(answer.id, -1)}
-                  className={`hover:text-red-600 ${myVotes[answer.id] === -1 ? 'text-red-600' : ''}`}
+                  className={`hover:text-red-300 ${myVotes[answer.id] === -1 ? 'text-red-300' : ''}`}
                 >
                   ▼
                 </button>
@@ -226,19 +230,18 @@ export default function BoardPage({ params }) {
                 onClick={() =>
                   setOpenCommentBox(openCommentBox === answer.id ? null : answer.id)
                 }
-                title="add comment"
                 className="text-xs text-blue-600 whitespace-nowrap"
               >
                 {comments[answer.id]?.length
                   ? `${comments[answer.id].length} comment(s)`
-                  : '🗩'}
+                  : 'Comment'}
               </button>
             </div>
 
             {openCommentBox === answer.id && (
               <div className="mt-2 ml-6 flex flex-col gap-1.5">
                 {(comments[answer.id] || []).map((c) => (
-                  <div key={c.id} className="text-xs bg-gray-300 rounded p-1.5">
+                  <div key={c.id} className="text-xs bg-gray-200 rounded p-1.5">
                     {c.body}
                   </div>
                 ))}
