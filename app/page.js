@@ -94,10 +94,10 @@ export default function Home() {
     ? boards.filter((b) =>
         (b.creator_name || '').toLowerCase().includes(filterName.trim().toLowerCase())
       )
-    : []
+    : boards
 
   return (
-    <main className="max-w-3xl mx-auto mt-16 px-4">
+    <main className="w-full max-w-3xl min-w-[500px] mx-auto mt-16 px-4">
       <h1 className="text-xl font-semibold mb-4">Create a new topic</h1>
       <form onSubmit={createBoard} className="flex flex-col gap-3 mb-12">
         <input
@@ -123,18 +123,15 @@ export default function Home() {
       </form>
 
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">Find your boards</h2>
+        <h2 className="text-lg font-semibold">All boards</h2>
         <input
           className="rounded p-2 bg-white text-sm w-48"
-          placeholder="Enter your name..."
+          placeholder="Filter by your name to delete..."
           value={filterName}
           onChange={(e) => setFilterName(e.target.value)}
         />
       </div>
 
-      {filterName.trim() === '' ? (
-        <p className="text-gray-500 text-sm">Enter your name above to see your boards.</p>
-      ) : (
         <div className="flex flex-col gap-2">
           {filteredBoards.length === 0 && (
             <p className="text-gray-500 text-sm">No boards found for that name.</p>
@@ -163,7 +160,6 @@ export default function Home() {
             </div>
           ))}
         </div>
-      )}
     </main>
   )
 }
