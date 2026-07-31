@@ -206,7 +206,7 @@ export default function GroupPage({ params }) {
           className="rounded p-3 w-full bg-white"
           rows={3}
           placeholder="What's the question?
-          Tip: Avoid yes/no and respondant-specific questions. This is more of a discussion than a survey"
+          Tip: Avoid close-ended and respondant-specific questions. This is more a discussion than a survey"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
         />

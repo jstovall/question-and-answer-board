@@ -37,11 +37,12 @@ export default function BoardPage({ params }) {
     setBoard(data)
   }
 
-  async function loadAnswers() {
+async function loadAnswers() {
     const { data, error } = await supabase
       .from('answers')
       .select()
       .eq('board_id', id)
+      .order('is_accepted', { ascending: false })
       .order('score', { ascending: false })
 
     if (error) {
@@ -69,6 +70,17 @@ export default function BoardPage({ params }) {
       voteMap[v.answer_id] = v.value
     })
     setMyVotes(voteMap)
+  }
+
+  async function markBestAnswer(answerId, currentlyAccepted) {
+    // Unset any existing accepted answer for this board first
+    await supabase.from('answers').update({ is_accepted: false }).eq('board_id', id)
+
+    if (!currentlyAccepted) {
+      await supabase.from('answers').update({ is_accepted: true }).eq('id', answerId)
+    }
+
+    loadAnswers()
   }
 
   async function loadComments() {
@@ -190,9 +202,13 @@ export default function BoardPage({ params }) {
           className="rounded p-3 w-full bg-white"
           rows={2}
           placeholder="Add your answer..."
+          maxLength={1000}
           value={newAnswer}
           onChange={(e) => setNewAnswer(e.target.value)}
         />
+        <div className="text-xs text-gray-400 -mt-2 self-end">
+          {newAnswer.length}/1000
+        </div>
         <button
           type="submit"
           className="bg-gray-800 text-white rounded py-2 px-4 self-start"
@@ -206,7 +222,13 @@ export default function BoardPage({ params }) {
           <p className="text-gray-500">No answers yet. Be the first!</p>
         )}
         {answers.map((answer) => (
-          <div key={answer.id} className="rounded p-2 bg-gray-100">
+<div
+            key={answer.id}
+            className={`rounded p-2 ${answer.is_accepted ? 'bg-green-100' : 'bg-gray-200'}`}
+          >
+            {answer.is_accepted && (
+              <div className="text-xs text-green-700 font-medium mb-1">✓ Best Answer</div>
+            )}
             <div className="flex gap-2 items-center">
               <div className="flex items-center gap-1 text-gray-200">
                 <button
@@ -235,6 +257,12 @@ export default function BoardPage({ params }) {
                 {comments[answer.id]?.length
                   ? `${comments[answer.id].length} comment(s)`
                   : 'Comment'}
+              </button>
+                            <button
+                onClick={() => markBestAnswer(answer.id, answer.is_accepted)}
+                className="text-xs text-gray-500 whitespace-nowrap"
+              >
+                {answer.is_accepted ? 'Unmark' : 'Mark as best'}
               </button>
             </div>
 

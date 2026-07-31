@@ -16,10 +16,13 @@ export default function Home() {
   const [groupName, setGroupName] = useState('')
   const [loading, setLoading] = useState(false)
   const [groups, setGroups] = useState([])
+  const [boardCounts, setBoardCounts] = useState({}) // group_id -> board count
+  const [answerCounts, setAnswerCounts] = useState({}) // group_id -> answer count
   const router = useRouter()
 
   useEffect(() => {
     loadGroups()
+    loadStats()
   }, [])
 
   async function loadGroups() {
@@ -33,6 +36,43 @@ export default function Home() {
       return
     }
     setGroups(data)
+  }
+
+  async function loadStats() {
+    const { data: boardsData, error: boardsError } = await supabase
+      .from('boards')
+      .select('id, group_id')
+
+    if (boardsError) {
+      console.error(boardsError)
+      return
+    }
+
+    const bCounts = {}
+    const boardToGroup = {}
+    boardsData.forEach((b) => {
+      bCounts[b.group_id] = (bCounts[b.group_id] || 0) + 1
+      boardToGroup[b.id] = b.group_id
+    })
+    setBoardCounts(bCounts)
+
+    const { data: answersData, error: answersError } = await supabase
+      .from('answers')
+      .select('board_id')
+
+    if (answersError) {
+      console.error(answersError)
+      return
+    }
+
+    const aCounts = {}
+    answersData.forEach((a) => {
+      const groupId = boardToGroup[a.board_id]
+      if (groupId) {
+        aCounts[groupId] = (aCounts[groupId] || 0) + 1
+      }
+    })
+    setAnswerCounts(aCounts)
   }
 
   async function createGroup(e) {
@@ -92,7 +132,9 @@ export default function Home() {
             className="block rounded p-3 bg-gray-100 hover:bg-gray-200 transition"
           >
             <div className="text-sm">{g.name}</div>
-            <div className="text-xs text-gray-500 mt-1">/g/{g.id}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              /g/{g.id} · {boardCounts[g.id] || 0} question(s) · {answerCounts[g.id] || 0} answer(s)
+            </div>
           </a>
         ))}
       </div>
