@@ -160,7 +160,7 @@ export default function BoardPage({ params }) {
   if (!board) return <div className="p-8">Board not found.</div>
 
   return (
-    <main className="w-full max-w-3xl min-w-[450px] mx-auto mt-16 px-4">
+    <main className="w-full max-w-3xl min-w-[400px] mx-auto mt-16 px-4">
       <h1 className="text-xl font-semibold mb-6">{board.question}</h1>
 
       <form onSubmit={submitAnswer} className="flex flex-col gap-3 mb-8">
