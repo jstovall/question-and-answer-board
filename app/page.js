@@ -97,7 +97,7 @@ export default function Home() {
     : boards
 
   return (
-    <main className="w-full max-w-3xl min-w-[500px] mx-auto mt-16 px-4">
+    <main className="w-full max-w-3xl min-w-[450px] mx-auto mt-16 px-4">
       <h1 className="text-xl font-semibold mb-4">Create a new topic</h1>
       <form onSubmit={createBoard} className="flex flex-col gap-3 mb-12">
         <input
