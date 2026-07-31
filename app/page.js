@@ -75,6 +75,59 @@ export default function Home() {
     router.push(`/b/${data.id}`)
   }
 
+  async function exportBoard(board) {
+    const { data: answers, error: answersError } = await supabase
+      .from('answers')
+      .select()
+      .eq('board_id', board.id)
+      .order('score', { ascending: false })
+
+    if (answersError) {
+      alert('Something went wrong: ' + answersError.message)
+      return
+    }
+
+    const answerIds = answers.map((a) => a.id)
+    let commentsByAnswer = {}
+
+    if (answerIds.length > 0) {
+      const { data: comments, error: commentsError } = await supabase
+        .from('comments')
+        .select()
+        .in('answer_id', answerIds)
+        .order('created_at', { ascending: true })
+
+      if (commentsError) {
+        alert('Something went wrong: ' + commentsError.message)
+        return
+      }
+
+      comments.forEach((c) => {
+        if (!commentsByAnswer[c.answer_id]) commentsByAnswer[c.answer_id] = []
+        commentsByAnswer[c.answer_id].push(c.body)
+      })
+    }
+
+    const escapeCSV = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`
+
+    const rows = [['Question', 'Answer', 'Score', 'Comments', 'Answer Created At']]
+
+    answers.forEach((a) => {
+      const comments = (commentsByAnswer[a.id] || []).join(' | ')
+      rows.push([board.question, a.body, a.score, comments, a.created_at])
+    })
+
+    const csvContent = rows.map((row) => row.map(escapeCSV).join(',')).join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `board-${board.id}-export.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   async function deleteBoard(boardId) {
     const confirmed = confirm(
       'Delete this board and all its answers/comments? This cannot be undone.'
@@ -91,8 +144,11 @@ export default function Home() {
     loadBoards()
   }
 
+  const isDeleteMode = filterName.trim().toUpperCase() === 'DELETE'
+  const isExportMode = filterName.trim().toUpperCase() === 'EXPORT'
+
   const filteredBoards = (
-    filterName.trim()
+    filterName.trim() && !isDeleteMode && !isExportMode
       ? boards.filter((b) =>
           (b.creator_name || '').toLowerCase().includes(filterName.trim().toLowerCase())
         )
@@ -167,8 +223,20 @@ export default function Home() {
                   {b.created_at.slice(0, 10)} · {answerCounts[b.id] || 0} answer(s)
                 </div>
               </a>
-              {b.creator_name &&
-                b.creator_name.toLowerCase() === filterName.trim().toLowerCase() && (
+<div className="flex gap-2">
+                {(isExportMode ||
+                  (b.creator_name &&
+                    b.creator_name.toLowerCase() === filterName.trim().toLowerCase())) && (
+                  <button
+                    onClick={() => exportBoard(b)}
+                    className="text-xs text-blue-600 whitespace-nowrap"
+                  >
+                    Export
+                  </button>
+                )}
+                {(isDeleteMode ||
+                  (b.creator_name &&
+                    b.creator_name.toLowerCase() === filterName.trim().toLowerCase())) && (
                   <button
                     onClick={() => deleteBoard(b.id)}
                     className="text-xs text-red-600 whitespace-nowrap"
@@ -176,6 +244,7 @@ export default function Home() {
                     Delete
                   </button>
                 )}
+              </div>
             </div>
           ))}
         </div>

@@ -14,6 +14,7 @@ export default function BoardPage({ params }) {
   const [comments, setComments] = useState({})
   const [openCommentBox, setOpenCommentBox] = useState(null)
   const [newComment, setNewComment] = useState('')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     loadBoard()
@@ -34,6 +35,14 @@ export default function BoardPage({ params }) {
       return
     }
     setBoard(data)
+  }
+
+  function copyLink() {
+    const url = window.location.href
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
   }
 
   async function loadAnswers() {
@@ -161,7 +170,16 @@ export default function BoardPage({ params }) {
 
   return (
     <main className="w-full max-w-3xl min-w-[400px] mx-auto mt-16 px-4">
-      <h1 className="text-xl font-semibold mb-6">{board.question}</h1>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <h1 className="text-xl font-semibold">{board.question}</h1>
+        <button
+          onClick={copyLink}
+          title="Copy link"
+          className="text-xs text-blue-600 whitespace-nowrap"
+        >
+          {copied ? 'Copied!' : '🔗︎'}
+        </button>
+      </div>
 
       <form onSubmit={submitAnswer} className="flex flex-col gap-3 mb-8">
         <textarea
@@ -208,11 +226,12 @@ export default function BoardPage({ params }) {
                 onClick={() =>
                   setOpenCommentBox(openCommentBox === answer.id ? null : answer.id)
                 }
+                title="add comment"
                 className="text-xs text-blue-600 whitespace-nowrap"
               >
                 {comments[answer.id]?.length
                   ? `${comments[answer.id].length} comment(s)`
-                  : 'Comment'}
+                  : '🗩'}
               </button>
             </div>
 
