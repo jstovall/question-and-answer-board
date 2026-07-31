@@ -11,11 +11,13 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [boards, setBoards] = useState([])
   const [filterName, setFilterName] = useState('')
+  const [answerCounts, setAnswerCounts] = useState({}) // board_id -> count
   const router = useRouter()
 
   useEffect(() => {
     setCreatorName(getSavedName())
     loadBoards()
+    loadAnswerCounts()
   }, [])
 
   async function loadBoards() {
@@ -29,6 +31,21 @@ export default function Home() {
       return
     }
     setBoards(data)
+  }
+
+  async function loadAnswerCounts() {
+    const { data, error } = await supabase.from('answers').select('board_id')
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    const counts = {}
+    data.forEach((a) => {
+      counts[a.board_id] = (counts[a.board_id] || 0) + 1
+    })
+    setAnswerCounts(counts)
   }
 
   async function createBoard(e) {
@@ -129,9 +146,10 @@ export default function Home() {
             >
               <a href={`/b/${b.id}`} className="flex-1">
                 <div className="text-sm">{b.question}</div>
-                {b.creator_name && (
-                  <div className="text-xs text-gray-500 mt-1">by {b.creator_name}</div>
-                )}
+                <div className="text-xs text-gray-500 mt-1">
+                  {b.creator_name && <span>by {b.creator_name} · </span>}
+                  {b.created_at.slice(0, 10)} · {answerCounts[b.id] || 0} answer(s)
+                </div>
               </a>
               {b.creator_name &&
                 b.creator_name.toLowerCase() === filterName.trim().toLowerCase() && (
