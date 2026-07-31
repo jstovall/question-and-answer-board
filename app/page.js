@@ -174,7 +174,7 @@ export default function Home() {
         <textarea
           className="rounded p-3 w-full bg-white"
           rows={3}
-          placeholder="What's the question?"
+          placeholder="What's the question? Tip: avoid yes/no and respondent-specific questions -- this is a more of a dialogue than a survey."
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
         />
