@@ -57,11 +57,27 @@ export default function Home() {
     router.push(`/b/${data.id}`)
   }
 
+  async function deleteBoard(boardId) {
+    const confirmed = confirm(
+      'Delete this board and all its answers/comments? This cannot be undone.'
+    )
+    if (!confirmed) return
+
+    const { error } = await supabase.from('boards').delete().eq('id', boardId)
+
+    if (error) {
+      alert('Something went wrong: ' + error.message)
+      return
+    }
+
+    loadBoards()
+  }
+
   const filteredBoards = filterName.trim()
     ? boards.filter((b) =>
         (b.creator_name || '').toLowerCase().includes(filterName.trim().toLowerCase())
       )
-    : boards
+    : []
 
   return (
     <main className="max-w-3xl mx-auto mt-16 px-4">
@@ -90,32 +106,46 @@ export default function Home() {
       </form>
 
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">All boards</h2>
+        <h2 className="text-lg font-semibold">Find your boards</h2>
         <input
           className="rounded p-2 bg-white text-sm w-48"
-          placeholder="Filter by creator..."
+          placeholder="Enter your name..."
           value={filterName}
           onChange={(e) => setFilterName(e.target.value)}
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        {filteredBoards.length === 0 && (
-          <p className="text-gray-500 text-sm">No boards found.</p>
-        )}
-        {filteredBoards.map((b) => (
-          <a
-            key={b.id}
-            href={`/b/${b.id}`}
-            className="block rounded p-3 bg-gray-200 hover:bg-gray-300 transition"
-          >
-            <div className="text-sm">{b.question}</div>
-            {b.creator_name && (
-              <div className="text-xs text-gray-500 mt-1">by {b.creator_name}</div>
-            )}
-          </a>
-        ))}
-      </div>
+      {filterName.trim() === '' ? (
+        <p className="text-gray-500 text-sm">Enter your name above to see your boards.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {filteredBoards.length === 0 && (
+            <p className="text-gray-500 text-sm">No boards found for that name.</p>
+          )}
+          {filteredBoards.map((b) => (
+            <div
+              key={b.id}
+              className="rounded p-3 bg-gray-200 flex justify-between items-start gap-2"
+            >
+              <a href={`/b/${b.id}`} className="flex-1">
+                <div className="text-sm">{b.question}</div>
+                {b.creator_name && (
+                  <div className="text-xs text-gray-500 mt-1">by {b.creator_name}</div>
+                )}
+              </a>
+              {b.creator_name &&
+                b.creator_name.toLowerCase() === filterName.trim().toLowerCase() && (
+                  <button
+                    onClick={() => deleteBoard(b.id)}
+                    className="text-xs text-red-600 whitespace-nowrap"
+                  >
+                    Delete
+                  </button>
+                )}
+            </div>
+          ))}
+        </div>
+      )}
     </main>
   )
 }
