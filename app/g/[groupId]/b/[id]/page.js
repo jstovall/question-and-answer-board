@@ -230,7 +230,7 @@ async function loadAnswers() {
               <div className="text-xs text-green-700 font-medium mb-1">✓ Best Answer</div>
             )}
             <div className="flex gap-2 items-center">
-              <div className="flex items-center gap-1 text-gray-200">
+              <div className="flex items-center gap-1 text-gray-300">
                 <button
                   onClick={() => vote(answer.id, 1)}
                   className={`hover:text-green-300 ${myVotes[answer.id] === 1 ? 'text-green-300' : ''}`}
