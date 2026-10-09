@@ -5,6 +5,7 @@ import { supabase } from '../../../../../lib/supabaseClient'
 import { getVoterId } from '../../../../../lib/voterId'
 import { getSavedName } from '../../../../../lib/creatorName'
 import { getAuthorName, saveAuthorName } from '../../../../../lib/authorName'
+import Linkify from '../../../../../lib/Linkify'
 
 export default function BoardPage({ params }) {
   const { groupId, id } = use(params)
@@ -410,7 +411,7 @@ export default function BoardPage({ params }) {
                 </div>
               ) : (
                 <div className="flex-1 text-sm">
-                  {answer.body}
+                  <Linkify text={answer.body} />
                   {answer.author_name && (
                     <span className="text-xs text-gray-500"> · {answer.author_name}</span>
                   )}
@@ -477,7 +478,7 @@ export default function BoardPage({ params }) {
                       </div>
                     ) : (
                       <>
-                        {c.body}
+                        <Linkify text={c.body} />
                         {c.author_name && (
                           <span className="text-gray-500"> · {c.author_name}</span>
                         )}
