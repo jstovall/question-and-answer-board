@@ -189,10 +189,7 @@ export default function GroupPage({ params }) {
 
   return (
     <main className="w-full max-w-3xl min-w-[400px] mx-auto mt-16 px-4">
-      <a href="/" className="text-xs text-blue-600">
-        ← All groups
-      </a>
-      <h1 className="text-xl font-semibold mt-2 mb-4">{group.name}</h1>
+      <h1 className="text-xl font-semibold mb-4">{group.name}</h1>
 
       <h2 className="text-lg font-semibold mb-2">Post a question</h2>
       <form onSubmit={createBoard} className="flex flex-col gap-3 mb-12">
