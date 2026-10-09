@@ -171,10 +171,14 @@ export default function GroupPage({ params }) {
   const isDeleteMode = filterName.trim().toUpperCase() === 'DELETE'
   const isExportMode = filterName.trim().toUpperCase() === 'EXPORT'
 
+  const filterText = filterName.trim().toLowerCase()
+
   const filteredBoards = (
-    filterName.trim() && !isDeleteMode && !isExportMode
-      ? boards.filter((b) =>
-          (b.creator_name || '').toLowerCase().includes(filterName.trim().toLowerCase())
+    filterText && !isDeleteMode && !isExportMode
+      ? boards.filter(
+          (b) =>
+            b.question.toLowerCase().includes(filterText) ||
+            (b.creator_name || '').toLowerCase().includes(filterText)
         )
       : boards
   ).slice().sort((a, b) => {
