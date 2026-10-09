@@ -18,6 +18,13 @@ export default function BoardPage({ params }) {
   const [newComment, setNewComment] = useState('')
   const [copied, setCopied] = useState(false)
 
+  // This browser's anonymous ID (used to decide who can edit/delete)
+  const [myId, setMyId] = useState(null)
+
+  // Editing: { type: 'answer' | 'comment', id } or null
+  const [editing, setEditing] = useState(null)
+  const [editText, setEditText] = useState('')
+
   // Name handling: null = not asked yet, '' = chose anonymous
   const [authorName, setAuthorName] = useState(null)
   const [showNamePrompt, setShowNamePrompt] = useState(false)
@@ -25,6 +32,7 @@ export default function BoardPage({ params }) {
   const [pendingAction, setPendingAction] = useState(null)
 
   useEffect(() => {
+    setMyId(getVoterId())
     setAuthorName(getAuthorName(groupId))
     loadBoard()
     loadAnswers()
@@ -100,6 +108,11 @@ export default function BoardPage({ params }) {
     setComments(grouped)
   }
 
+  // True if this answer/comment was posted from this browser
+  function isMine(item) {
+    return !!myId && item.author_id === myId
+  }
+
   // Runs the action right away if the poster's name choice is known,
   // otherwise shows the name prompt first and runs it afterward.
   function withAuthorName(action) {
@@ -145,6 +158,7 @@ export default function BoardPage({ params }) {
       board_id: id,
       body: newAnswer.trim(),
       author_name: name || null,
+      author_id: getVoterId(),
     })
 
     if (error) {
@@ -166,6 +180,7 @@ export default function BoardPage({ params }) {
       answer_id: answerId,
       body: newComment.trim(),
       author_name: name || null,
+      author_id: getVoterId(),
     })
 
     if (error) {
@@ -175,6 +190,66 @@ export default function BoardPage({ params }) {
 
     setNewComment('')
     loadComments()
+  }
+
+  function startEdit(type, item) {
+    setEditing({ type, id: item.id })
+    setEditText(item.body)
+  }
+
+  function cancelEdit() {
+    setEditing(null)
+    setEditText('')
+  }
+
+  async function saveEdit() {
+    if (!editing || !editText.trim()) return
+
+    const table = editing.type === 'answer' ? 'answers' : 'comments'
+
+    const { error } = await supabase
+      .from(table)
+      .update({ body: editText.trim(), edited_at: new Date().toISOString() })
+      .eq('id', editing.id)
+      .eq('author_id', getVoterId())
+
+    if (error) {
+      alert('Something went wrong: ' + error.message)
+      return
+    }
+
+    const type = editing.type
+    cancelEdit()
+    if (type === 'answer') loadAnswers()
+    else loadComments()
+  }
+
+  async function deletePost(type, item) {
+    const message =
+      type === 'answer'
+        ? 'Delete your answer? Its votes and comments will be deleted too.'
+        : 'Delete your comment?'
+    if (!confirm(message)) return
+
+    const table = type === 'answer' ? 'answers' : 'comments'
+
+    const { error } = await supabase
+      .from(table)
+      .delete()
+      .eq('id', item.id)
+      .eq('author_id', getVoterId())
+
+    if (error) {
+      alert('Something went wrong: ' + error.message)
+      return
+    }
+
+    if (type === 'answer') {
+      loadAnswers()
+      loadComments()
+    } else {
+      loadComments()
+    }
   }
 
   async function vote(answerId, value) {
@@ -313,12 +388,54 @@ export default function BoardPage({ params }) {
                   ▼
                 </button>
               </div>
-              <div className="flex-1 text-sm">
-                {answer.body}
-                {answer.author_name && (
-                  <span className="text-xs text-gray-500"> · {answer.author_name}</span>
-                )}
-              </div>
+
+              {editing?.type === 'answer' && editing.id === answer.id ? (
+                <div className="flex-1 flex flex-col gap-1">
+                  <textarea
+                    className="rounded p-2 w-full bg-white text-sm"
+                    rows={2}
+                    maxLength={1000}
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                  />
+                  <div className="flex gap-3 justify-end text-xs">
+                    <span className="text-gray-400 mr-auto">{editText.length}/1000</span>
+                    <button onClick={cancelEdit} className="text-gray-500">
+                      Cancel
+                    </button>
+                    <button onClick={saveEdit} className="text-blue-600">
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 text-sm">
+                  {answer.body}
+                  {answer.author_name && (
+                    <span className="text-xs text-gray-500"> · {answer.author_name}</span>
+                  )}
+                  {answer.edited_at && (
+                    <span className="text-xs text-gray-400"> (edited)</span>
+                  )}
+                  {isMine(answer) && (
+                    <span className="text-xs">
+                      <button
+                        onClick={() => startEdit('answer', answer)}
+                        className="text-gray-500 ml-2"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deletePost('answer', answer)}
+                        className="text-red-600 ml-2"
+                      >
+                        Delete
+                      </button>
+                    </span>
+                  )}
+                </div>
+              )}
+
               <button
                 onClick={() =>
                   setOpenCommentBox(openCommentBox === answer.id ? null : answer.id)
@@ -341,9 +458,49 @@ export default function BoardPage({ params }) {
               <div className="mt-2 ml-6 flex flex-col gap-1.5">
                 {(comments[answer.id] || []).map((c) => (
                   <div key={c.id} className="text-xs bg-gray-300 rounded p-1.5">
-                    {c.body}
-                    {c.author_name && (
-                      <span className="text-gray-500"> · {c.author_name}</span>
+                    {editing?.type === 'comment' && editing.id === c.id ? (
+                      <div className="flex flex-col gap-1">
+                        <textarea
+                          className="rounded p-1.5 w-full bg-white text-xs"
+                          rows={2}
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                        />
+                        <div className="flex gap-3 justify-end">
+                          <button onClick={cancelEdit} className="text-gray-500">
+                            Cancel
+                          </button>
+                          <button onClick={saveEdit} className="text-blue-600">
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {c.body}
+                        {c.author_name && (
+                          <span className="text-gray-500"> · {c.author_name}</span>
+                        )}
+                        {c.edited_at && (
+                          <span className="text-gray-500"> (edited)</span>
+                        )}
+                        {isMine(c) && (
+                          <span>
+                            <button
+                              onClick={() => startEdit('comment', c)}
+                              className="text-gray-600 ml-2"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => deletePost('comment', c)}
+                              className="text-red-600 ml-2"
+                            >
+                              Delete
+                            </button>
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}
